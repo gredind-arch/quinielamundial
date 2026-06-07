@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -292,17 +293,14 @@
 <div class="container">
     <h1>🏆 Quiniela Mundial 2026 🏆</h1>
     
-    <!-- Barra de Sincronización en la Nube -->
     <div id="loading" class="loading-bar">⏳ Conectando con la base de datos en la nube...</div>
     
-    <!-- Botones de Pestañas -->
     <div class="tabs">
         <button id="btn-tab-posiciones" class="tab-btn active" onclick="irAPestaña('panel-posiciones')">📊 Tabla General</button>
         <button id="btn-tab-resultados" class="tab-btn admin-only" onclick="irAPestaña('panel-resultados')">⚽ Resultados Reales</button>
         <button id="btn-tab-participantes" class="tab-btn admin-only" onclick="irAPestaña('panel-participantes')">👥 Participantes</button>
     </div>
 
-    <!-- PESTAÑA 1: TABLA GENERAL PÚBLICA -->
     <div id="panel-posiciones" class="panel" style="display: block;">
         <h2>Posiciones en Vivo</h2>
         <table>
@@ -320,7 +318,6 @@
         </table>
     </div>
 
-    <!-- NUEVO PANEL PÚBLICO: AUDITORÍA DE PREDICCIONES -->
     <div id="panel-ver-predicciones-publico" class="panel">
         <button class="btn-accion btn-back" onclick="irAPestaña('panel-posiciones')">⬅️ Volver a la Tabla General</button>
         <h2>Predicciones de: <span id="nombre-ver-publico" style="color:var(--primary);">[Nombre]</span></h2>
@@ -328,7 +325,6 @@
         <div class="grid-grupos" id="grid-ver-publico"></div>
     </div>
 
-    <!-- PESTAÑA 2: CONTROL DE RESULTADOS REALES (SÓLO ADMIN) -->
     <div id="panel-resultados" class="panel">
         <h2>Ingresar Resultados Reales de los Grupos</h2>
         <p style="text-align:center; color:#555; font-size:14px; margin-bottom: 20px;">Indica cuáles equipos van quedando en primer y segundo lugar en el torneo oficial.</p>
@@ -336,352 +332,10 @@
         <button class="btn-accion" onclick="guardarResultadosReales()">💾 Guardar Resultados Oficiales</button>
     </div>
 
-    <!-- PESTAÑA 3: LISTA DE PARTICIPANTES (SÓLO ADMIN) -->
     <div id="panel-participantes" class="panel">
         <h2>Panel de Participantes</h2>
         <div style="background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 25px;">
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Inscribir Nuevo Jugador:</label>
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="nuevo-nombre" placeholder="Nombre completo" style="flex: 1;">
-                <button onclick="agregarParticipante()" style="padding:0 25px; background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:20px;">+</button>
-            </div>
-        </div>
-        <div id="lista-personas-inscritas"></div>
-    </div>
-
-    <!-- PESTAÑA 4: FORMULARIO DE ASIGNACIÓN DE PREDICCIONES (ADMIN) -->
-    <div id="panel-editar-predicciones" class="panel">
-        <button class="btn-accion btn-back" onclick="irAPestaña('panel-participantes')">⬅️ Volver a la Lista de Participantes</button>
-        <h2>Predicciones de: <span id="nombre-editando" style="color:var(--primary);">[Nombre]</span></h2>
-        <input type="hidden" id="id-editando">
-        
-        <div class="grid-grupos" id="grid-predicciones-usuario"></div>
-        <button class="btn-accion" onclick="guardarPrediccionesUsuario()">💾 Guardar Pronósticos de este Usuario</button>
-    </div>
-</div>
-
-<!-- ZONA DE ACCESO EXCLUSIVA DE ADMINISTRADOR -->
-<div class="admin-lock-zone">
-    <div id="login-admin-box">
-        <label style="font-weight: bold; margin-right: 10px;">Modo Organizador:</label>
-        <input type="password" id="pass-admin" placeholder="Contraseña Secreta">
-        <button onclick="loguearAdmin()" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Entrar</button>
-    </div>
-    <div id="logout-admin-box" style="display:none;">
-        <span style="color:#2e7d32; font-weight:bold; margin-right:20px;">🔓 Sesión de Administrador Activa</span>
-        <button onclick="cerrarAdmin()" style="padding:8px 15px; background:#c62828; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cerrar Panel</button>
-    </div>
-</div>
-
-<script>
-    // ==========================================
-    // CONFIGURACIÓN DE TU BASE DE DATOS Y CLAVE
-    // ==========================================
-    const CONTRASEÑA_MAESTRA = "pajilla123"; 
-    const ENDPOINT_NUBE = "https://kvdb.io/qn_mundial_2026_pajilla_v1/datos_quiniela";
-    // ==========================================
-
-    // Equipos Oficiales del Mundial 2026
-    const mundial2026 = {
-        "A": ["México", "Sudáfrica", "Corea del Sur", "Chequia"],
-        "B": ["Canadá", "Bosnia y Herzegovina", "Qatar", "Suiza"],
-        "C": ["Brasil", "Marruecos", "Haití", "Escocia"],
-        "D": ["Estados Unidos", "Paraguay", "Australia", "Turquía"],
-        "E": ["Alemania", "Curazao", "Costa de Marfil", "Ecuador"],
-        "F": ["Países Bajos", "Japón", "Suecia", "Túnez"],
-        "G": ["Bélgica", "Egipto", "Irán", "Nueva Zelanda"],
-        "H": ["España", "Cabo Verde", "Arabia Saudita", "Uruguay"],
-        "I": ["Francia", "Senegal", "Irak", "Noruega"],
-        "J": ["Argentina", "Argelia", "Austria", "Jordania"],
-        "K": ["Portugal", "RD Congo", "Uzbekistán", "Colombia"],
-        "L": ["Inglaterra", "Croacia", "Ghana", "Panamá"]
-    };
-
-    let datosApp = { participantes: [], resultadosReales: {} };
-
-    // Estructurar vacíos de los grupos principales
-    Object.keys(mundial2026).forEach(g => {
-        datosApp.resultadosReales[g] = { r1: "", r2: "" };
-    });
-
-    function irAPestaña(panelId) {
-        document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        document.getElementById(panelId).style.display = 'block';
-        
-        if (panelId === 'panel-posiciones') {
-            document.getElementById('btn-tab-posiciones').classList.add('active');
-            calcularYMostrarTabla();
-        }
-        if (panelId === 'panel-resultados') document.getElementById('btn-tab-resultados').classList.add('active');
-        if (panelId === 'panel-participantes') document.getElementById('btn-tab-participantes').classList.add('active');
-    }
-
-    async function descargarDatosDeLaNube() {
-        mostrarCargando(true);
-        try {
-            let res = await fetch(ENDPOINT_NUBE);
-            if (res.ok) {
-                let json = await res.json();
-                if (json && json.participantes) datosApp = json;
-            }
-        } catch (e) {
-            console.log("Iniciando con datos vacíos...");
-        }
-        mostrarCargando(false);
-        
-        generarCamposResultadosReales();
-        renderListaParticipantes();
-        calcularYMostrarTabla();
-    }
-
-    async function subirDatosALaNube() {
-        mostrarCargando(true);
-        try {
-            await fetch(ENDPOINT_NUBE, { method: 'PUT', body: JSON.stringify(datosApp) });
-        } catch (e) {
-            alert("❌ Error al guardar datos en la nube.");
-        }
-        mostrarCargando(false);
-    }
-
-    function mostrarCargando(visible) {
-        document.getElementById('loading').style.display = visible ? 'block' : 'none';
-    }
-
-    // Seguridad de pestañas
-    function loguearAdmin() {
-        if (document.getElementById('pass-admin').value === CONTRASEÑA_MAESTRA) {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
-            document.getElementById('login-admin-box').style.display = 'none';
-            document.getElementById('logout-admin-box').style.display = 'block';
-            document.getElementById('pass-admin').value = '';
-        } else {
-            alert("❌ Contraseña incorrecta.");
-        }
-    }
-
-    function cerrarAdmin() {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-        document.getElementById('login-admin-box').style.display = 'block';
-        document.getElementById('logout-admin-box').style.display = 'none';
-        irAPestaña('panel-posiciones');
-    }
-
-    // Construcción de tarjetas de grupos para edición
-    function construirHTMLGrupo(prefijo, letraGrupo, equipoSeleccionado1, equipoSeleccionado2) {
-        const equipos = mundial2026[letraGrupo];
-        let opciones1 = `<option value="">-- Selecciona 1º --</option>`;
-        let opciones2 = `<option value="">-- Selecciona 2º --</option>`;
-        
-        equipos.forEach(eq => {
-            opciones1 += `<option value="${eq}" ${eq === equipoSeleccionado1 ? 'selected' : ''}>${eq}</option>`;
-            opciones2 += `<option value="${eq}" ${eq === equipoSeleccionado2 ? 'selected' : ''}>${eq}</option>`;
-        });
-
-        return `
-            <div class="group-card">
-                <h3 class="group-header">Grupo ${letraGrupo}</h3>
-                <div class="teams-list">
-                    ${equipos.map(e => `<span>⚽ ${e}</span>`).join('')}
-                </div>
-                <div class="selects-container">
-                    <div class="select-box">
-                        <label>🥇 1er Lugar:</label>
-                        <select id="${prefijo}-1-${letraGrupo}">
-                            ${opciones1}
-                        </select>
-                    </div>
-                    <div class="select-box">
-                        <label>🥈 2do Lugar:</label>
-                        <select id="${prefijo}-2-${letraGrupo}">
-                            ${opciones2}
-                        </select>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // ---- RESULTADOS REALES ----
-    function generarCamposResultadosReales() {
-        const contenedor = document.getElementById('grid-resultados-reales');
-        contenedor.innerHTML = '';
-        Object.keys(mundial2026).forEach(g => {
-            const r = datosApp.resultadosReales[g] || { r1: "", r2: "" };
-            contenedor.innerHTML += construirHTMLGrupo('real', g, r.r1, r.r2);
-        });
-    }
-
-    async function guardarResultadosReales() {
-        Object.keys(mundial2026).forEach(g => {
-            datosApp.resultadosReales[g].r1 = document.getElementById(`real-1-${g}`).value;
-            datosApp.resultadosReales[g].r2 = document.getElementById(`real-2-${g}`).value;
-        });
-        await subirDatosALaNube();
-        alert("✅ Resultados reales actualizados en la nube.");
-        irAPestaña('panel-posiciones');
-    }
-
-    // ---- GESTIÓN DE PARTICIPANTES ----
-    async function agregarParticipante() {
-        const input = document.getElementById('nuevo-nombre');
-        const nombre = input.value.trim();
-        if(!nombre) return alert("Escribe un nombre válido.");
-        
-        let nuevo = { id: Date.now(), nombre: nombre, predicciones: {} };
-        Object.keys(mundial2026).forEach(g => { nuevo.predicciones[g] = { p1: "", p2: "" }; });
-        
-        datosApp.participantes.push(nuevo);
-        await subirDatosALaNube();
-        input.value = '';
-        renderListaParticipantes();
-    }
-
-    function renderListaParticipantes() {
-        const lista = document.getElementById('lista-personas-inscritas');
-        lista.innerHTML = '';
-        datosApp.participantes.forEach(p => {
-            lista.innerHTML += `
-                <div class="item-part">
-                    <span><strong>${p.nombre}</strong></span>
-                    <button class="btn-edit" onclick="abrirPantallaPredicciones(${p.id})">✏️ Definir Predicciones</button>
-                </div>
-            `;
-        });
-    }
-
-    function abrirPantallaPredicciones(id) {
-        const p = datosApp.participantes.find(part => part.id === id);
-        if(!p) return;
-        
-        document.getElementById('nombre-editando').innerText = p.nombre;
-        document.getElementById('id-editando').value = p.id;
-        
-        const contenedor = document.getElementById('grid-predicciones-usuario');
-        contenedor.innerHTML = '';
-        
-        Object.keys(mundial2026).forEach(g => {
-            const pred = p.predicciones[g] || { p1: "", p2: "" };
-            contenedor.innerHTML += construirHTMLGrupo('pred', g, pred.p1, pred.p2);
-        });
-        
-        irAPestaña('panel-editar-predicciones');
-    }
-
-    async function guardarPrediccionesUsuario() {
-        const id = parseInt(document.getElementById('id-editando').value);
-        const idx = datosApp.participantes.findIndex(p => p.id === id);
-        if(idx === -1) return;
-
-        Object.keys(mundial2026).forEach(g => {
-            datosApp.participantes[idx].predicciones[g] = {
-                p1: document.getElementById(`pred-1-${g}`).value,
-                p2: document.getElementById(`pred-2-${g}`).value
-            };
-        });
-
-        await subirDatosALaNube();
-        alert(`✅ Predicciones de ${datosApp.participantes[idx].nombre} guardadas en internet.`);
-        irAPestaña('panel-participantes');
-        renderListaParticipantes();
-    }
-
-    // ---- LÓGICA DE AUDITORÍA PÚBLICA (NUEVO) ----
-    function verPrediccionesPublicas(id) {
-        const p = datosApp.participantes.find(part => part.id === id);
-        if(!p) return;
-        
-        document.getElementById('nombre-ver-publico').innerText = p.nombre;
-        const contenedor = document.getElementById('grid-ver-publico');
-        contenedor.innerHTML = '';
-        
-        Object.keys(mundial2026).forEach(g => {
-            const pred = p.predicciones[g] || { p1: "", p2: "" };
-            const real = datosApp.resultadosReales[g] || { r1: "", r2: "" };
-            const pts = calcularPuntosGrupo(pred.p1, pred.p2, real.r1, real.r2);
-            
-            // Color de borde de la tarjeta según los aciertos para hacerlo visual
-            let colorBorde = '#cbd5e1'; // gris sin partidos reales aún
-            if (real.r1 || real.r2) {
-                if (pts === 3) colorBorde = '#2e7d32'; // verde perfecto
-                else if (pts === 2) colorBorde = '#f59e0b'; // naranja cruzados
-                else if (pts === 1) colorBorde = '#3b82f6'; // azul un acierto
-                else colorBorde = '#ef4444'; // rojo fallido
-            }
-
-            contenedor.innerHTML += `
-                <div class="group-card" style="border-top: 5px solid ${colorBorde};">
-                    <h3 style="margin:0 0 10px 0; text-align:center; color:var(--primary);">Grupo ${g}</h3>
-                    <div style="font-size: 14px; line-height: 1.6;">
-                        <p style="margin: 4px 0;">🥇 1º Predicho: <strong>${pred.p1 || 'Sin elegir'}</strong> ${real.r1 && pred.p1 === real.r1 ? '✅' : ''}</p>
-                        <p style="margin: 4px 0;">🥈 2º Predicho: <strong>${pred.p2 || 'Sin elegir'}</strong> ${real.r2 && pred.p2 === real.r2 ? '✅' : ''}</p>
-                        <hr style="border:0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
-                        <p style="margin: 0; font-weight: bold; text-align: center; color: #444;">
-                            Puntos obtenidos: <span style="font-size:16px; color:var(--primary);">${pts} pts</span>
-                        </p>
-                    </div>
-                </div>
-            `;
-        });
-        
-        irAPestaña('panel-ver-predicciones-publico');
-    }
-
-    // ---- CÁLCULO DE LA REGLA DE PUNTOS ----
-    function calcularPuntosGrupo(p1, p2, r1, r2) {
-        if (!r1 && !r2) return 0; 
-        if (!p1 && !p2) return 0;
-
-        // Caso 3 Puntos: Orden exacto
-        if (p1 === r1 && p2 === r2) return 3;
-        
-        // Caso 2 Puntos: Clasifican los dos pero al revés
-        if (p1 === r2 && p2 === r1) return 2;
-        
-        // Caso 1 Punto: Solo le atinó a un clasificado
-        if (p1 === r1 || p1 === r2 || p2 === r1 || p2 === r2) return 1;
-        
-        return 0;
-    }
-
-    function calcularYMostrarTabla() {
-        let resultados = datosApp.participantes.map(p => {
-            let total = 0;
-            Object.keys(mundial2026).forEach(g => {
-                const pred = p.predicciones[g] || { p1: "", p2: "" };
-                const real = datosApp.resultadosReales[g] || { r1: "", r2: "" };
-                total += calcularPuntosGrupo(pred.p1, pred.p2, real.r1, real.r2);
-            });
-            return { id: p.id, nombre: p.nombre, puntos: total };
-        });
-
-        // Ordenar de mayor a menor puntuación
-        resultados.sort((a, b) => b.puntos - a.puntos);
-
-        const tbody = document.getElementById('tabla-posiciones-body');
-        tbody.innerHTML = '';
-        
-        if (resultados.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="color:#777;">No hay participantes inscritos aún.</td></tr>`;
-            return;
-        }
-
-        resultados.forEach((r, idx) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${idx + 1}º</strong></td>
-                    <td style="text-align: left; padding-left: 20px;">${r.nombre}</td>
-                    <td class="puntos-total">${r.puntos} pts</td>
-                    <td><button class="btn-ver-publico" onclick="verPrediccionesPublicas(${r.id})">👁️ Ver</button></td>
-                </tr>
-            `;
-        });
-    }
-
-    window.onload = descargarDatosDeLaNube;
-</script>
-
-</body>
-</html>
+                <button onclick="agregarParticip

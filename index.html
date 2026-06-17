@@ -42,7 +42,6 @@
             margin-top: 5px;
         }
 
-        /* Sistema de Navegación por Pestañas */
         .tabs {
             display: flex;
             justify-content: center;
@@ -72,7 +71,6 @@
             display: none;
         }
 
-        /* Tablas de Posiciones */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -105,7 +103,6 @@
             font-size: 18px;
         }
 
-        /* Botón de ver pronósticos de otros */
         .btn-ver-publico {
             background: #e2e8f0;
             color: var(--primary);
@@ -123,7 +120,6 @@
             color: white;
         }
 
-        /* Tarjetas de Grupos */
         .grid-grupos {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -195,7 +191,6 @@
             border-color: var(--primary);
         }
 
-        /* Botones de Acción */
         .btn-accion {
             display: block;
             width: 100%;
@@ -226,7 +221,6 @@
             background-color: #4a5568;
         }
 
-        /* Administrador de personas */
         .item-part {
             display: flex;
             justify-content: space-between;
@@ -366,14 +360,9 @@
 </div>
 
 <script>
-    // ==========================================
-    // CONFIGURACIÓN DE TU BASE DE DATOS Y CLAVE
-    // ==========================================
     const CONTRASEÑA_MAESTRA = "pajilla123"; 
     const ENDPOINT_NUBE = "https://kvdb.io/M7g1jxKHWEg4HC4Jy9nMs8/datos_quiniela";
-    // ==========================================
 
-    // Equipos Oficiales del Mundial 2026
     const mundial2026 = {
         "A": ["México", "Sudáfrica", "Corea del Sur", "Chequia"],
         "B": ["Canadá", "Bosnia y Herzegovina", "Qatar", "Suiza"],
@@ -391,7 +380,6 @@
 
     let datosApp = { participantes: [], resultadosReales: {} };
 
-    // Estructurar vacíos de los grupos principales
     Object.keys(mundial2026).forEach(g => {
         datosApp.resultadosReales[g] = { r1: "", r2: "" };
     });
@@ -399,9 +387,7 @@
     function irAPestaña(panelId) {
         document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
         document.getElementById(panelId).style.display = 'block';
-        
         if (panelId === 'panel-posiciones') {
             document.getElementById('btn-tab-posiciones').classList.add('active');
             calcularYMostrarTabla();
@@ -413,21 +399,13 @@
     async function descargarDatosDeLaNube() {
         mostrarCargando(true);
         try {
-            // Se agrega "?t=" + Date.now() para forzar al navegador a descargar datos frescos y evitar el caché
             let res = await fetch(ENDPOINT_NUBE + "?t=" + Date.now());
             if (res.ok) {
                 let json = await res.json();
                 if (json && json.participantes) datosApp = json;
-            } else if (res.status === 404) {
-                console.log("Base de datos nueva detectada. Se creará al guardar por primera vez.");
-            } else {
-                alert("⚠️ Error del servidor al descargar datos: " + res.status + " " + res.statusText);
             }
-        } catch (e) {
-            alert("❌ Error de conexión de red al descargar: " + e.message);
-        }
+        } catch (e) { alert("Error al cargar."); }
         mostrarCargando(false);
-        
         generarCamposResultadosReales();
         renderListaParticipantes();
         calcularYMostrarTabla();
@@ -436,37 +414,20 @@
     async function subirDatosALaNube() {
         mostrarCargando(true);
         try {
-            let res = await fetch(ENDPOINT_NUBE, { 
-                method: 'PUT', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosApp) 
-            });
-            
-            if (!res.ok) {
-                alert("❌ El servidor web rechazó el guardado: " + res.status + " " + res.statusText);
-            } else {
-                console.log("¡Guardado en la nube exitoso!");
-            }
-        } catch (e) {
-            alert("❌ Error de red: No se pudo enviar la información. " + e.message);
-        }
+            await fetch(ENDPOINT_NUBE, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datosApp) });
+        } catch (e) { alert("Error al guardar."); }
         mostrarCargando(false);
     }
 
-    function mostrarCargando(visible) {
-        document.getElementById('loading').style.display = visible ? 'block' : 'none';
-    }
+    function mostrarCargando(visible) { document.getElementById('loading').style.display = visible ? 'block' : 'none'; }
 
-    // Seguridad de pestañas
     function loguearAdmin() {
         if (document.getElementById('pass-admin').value === CONTRASEÑA_MAESTRA) {
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
             document.getElementById('login-admin-box').style.display = 'none';
             document.getElementById('logout-admin-box').style.display = 'block';
             document.getElementById('pass-admin').value = '';
-        } else {
-            alert("❌ Contraseña incorrecta.");
-        }
+        } else { alert("❌ Contraseña incorrecta."); }
     }
 
     function cerrarAdmin() {
@@ -476,42 +437,31 @@
         irAPestaña('panel-posiciones');
     }
 
-    // Construcción de tarjetas de grupos para edición
     function construirHTMLGrupo(prefijo, letraGrupo, equipoSeleccionado1, equipoSeleccionado2) {
         const equipos = mundial2026[letraGrupo];
-        let opciones1 = `<option value="">-- Selecciona 1º --</option>`;
-        let opciones2 = `<option value="">-- Selecciona 2º --</option>`;
-        
+        let opciones1 = `<option value="">-- 1º --</option>`;
+        let opciones2 = `<option value="">-- 2º --</option>`;
         equipos.forEach(eq => {
             opciones1 += `<option value="${eq}" ${eq === equipoSeleccionado1 ? 'selected' : ''}>${eq}</option>`;
             opciones2 += `<option value="${eq}" ${eq === equipoSeleccionado2 ? 'selected' : ''}>${eq}</option>`;
         });
-
         return `
             <div class="group-card">
                 <h3 class="group-header">Grupo ${letraGrupo}</h3>
-                <div class="teams-list">
-                    ${equipos.map(e => `<span>⚽ ${e}</span>`).join('')}
-                </div>
+                <div class="teams-list">${equipos.map(e => `<span>⚽ ${e}</span>`).join('')}</div>
                 <div class="selects-container">
                     <div class="select-box">
                         <label>🥇 1er Lugar:</label>
-                        <select id="${prefijo}-1-${letraGrupo}">
-                            ${opciones1}
-                        </select>
+                        <select id="${prefijo}-1-${letraGrupo}">${opciones1}</select>
                     </div>
                     <div class="select-box">
                         <label>🥈 2do Lugar:</label>
-                        <select id="${prefijo}-2-${letraGrupo}">
-                            ${opciones2}
-                        </select>
+                        <select id="${prefijo}-2-${letraGrupo}">${opciones2}</select>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 
-    // ---- RESULTADOS REALES ----
     function generarCamposResultadosReales() {
         const contenedor = document.getElementById('grid-resultados-reales');
         contenedor.innerHTML = '';
@@ -527,21 +477,18 @@
             datosApp.resultadosReales[g].r2 = document.getElementById(`real-2-${g}`).value;
         });
         await subirDatosALaNube();
-        alert("✅ Resultados reales actualizados en la nube.");
+        alert("✅ Resultados reales actualizados.");
         irAPestaña('panel-posiciones');
     }
 
-    // ---- GESTIÓN DE PARTICIPANTES ----
-    async function agregarParticipante() {
+    function agregarParticipante() {
         const input = document.getElementById('nuevo-nombre');
         const nombre = input.value.trim();
-        if(!nombre) return alert("Escribe un nombre válido.");
-        
+        if(!nombre) return alert("Escribe un nombre.");
         let nuevo = { id: Date.now(), nombre: nombre, predicciones: {} };
         Object.keys(mundial2026).forEach(g => { nuevo.predicciones[g] = { p1: "", p2: "" }; });
-        
         datosApp.participantes.push(nuevo);
-        await subirDatosALaNube();
+        subirDatosALaNube();
         input.value = '';
         renderListaParticipantes();
     }
@@ -554,96 +501,78 @@
                 <div class="item-part">
                     <span><strong>${p.nombre}</strong></span>
                     <button class="btn-edit" onclick="abrirPantallaPredicciones(${p.id})">✏️ Definir Predicciones</button>
-                </div>
-            `;
+                </div>`;
         });
     }
 
     function abrirPantallaPredicciones(id) {
         const p = datosApp.participantes.find(part => part.id === id);
         if(!p) return;
-        
         document.getElementById('nombre-editando').innerText = p.nombre;
         document.getElementById('id-editando').value = p.id;
-        
         const contenedor = document.getElementById('grid-predicciones-usuario');
         contenedor.innerHTML = '';
-        
         Object.keys(mundial2026).forEach(g => {
             const pred = p.predicciones[g] || { p1: "", p2: "" };
             contenedor.innerHTML += construirHTMLGrupo('pred', g, pred.p1, pred.p2);
         });
-        
         irAPestaña('panel-editar-predicciones');
     }
 
     async function guardarPrediccionesUsuario() {
         const id = parseInt(document.getElementById('id-editando').value);
         const idx = datosApp.participantes.findIndex(p => p.id === id);
-        if(idx === -1) return;
-
         Object.keys(mundial2026).forEach(g => {
             datosApp.participantes[idx].predicciones[g] = {
                 p1: document.getElementById(`pred-1-${g}`).value,
                 p2: document.getElementById(`pred-2-${g}`).value
             };
         });
-
         await subirDatosALaNube();
-        alert(`✅ Predicciones de ${datosApp.participantes[idx].nombre} guardadas en internet.`);
+        alert(`✅ Predicciones guardadas.`);
         irAPestaña('panel-participantes');
         renderListaParticipantes();
     }
 
-    // ---- LÓGICA DE AUDITORÍA PÚBLICA ----
     function verPrediccionesPublicas(id) {
         const p = datosApp.participantes.find(part => part.id === id);
         if(!p) return;
-        
         document.getElementById('nombre-ver-publico').innerText = p.nombre;
         const contenedor = document.getElementById('grid-ver-publico');
         contenedor.innerHTML = '';
-        
         Object.keys(mundial2026).forEach(g => {
             const pred = p.predicciones[g] || { p1: "", p2: "" };
             const real = datosApp.resultadosReales[g] || { r1: "", r2: "" };
             const pts = calcularPuntosGrupo(pred.p1, pred.p2, real.r1, real.r2);
-            
-            let colorBorde = '#cbd5e1'; 
-            if (real.r1 || real.r2) {
-                if (pts === 3) colorBorde = '#2e7d32'; 
-                else if (pts === 2) colorBorde = '#f59e0b'; 
-                else if (pts === 1) colorBorde = '#3b82f6'; 
-                else colorBorde = '#ef4444'; 
-            }
-
             contenedor.innerHTML += `
-                <div class="group-card" style="border-top: 5px solid ${colorBorde};">
+                <div class="group-card">
                     <h3 style="margin:0 0 10px 0; text-align:center; color:var(--primary);">Grupo ${g}</h3>
+                    
+                    <div style="background: #eef2ff; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px;">
+                        <p style="margin: 0 0 5px 0; font-weight: bold; color: #4338ca;">🏆 Tabla de la FIFA (Oficial):</p>
+                        <p style="margin: 2px 0;">🥇 1º: <strong>${real.r1 || 'Pendiente'}</strong></p>
+                        <p style="margin: 2px 0;">🥈 2º: <strong>${real.r2 || 'Pendiente'}</strong></p>
+                    </div>
+
                     <div style="font-size: 14px; line-height: 1.6;">
-                        <p style="margin: 4px 0;">🥇 1º Predicho: <strong>${pred.p1 || 'Sin elegir'}</strong> ${real.r1 && pred.p1 === real.r1 ? '✅' : ''}</p>
-                        <p style="margin: 4px 0;">🥈 2º Predicho: <strong>${pred.p2 || 'Sin elegir'}</strong> ${real.r2 && pred.p2 === real.r2 ? '✅' : ''}</p>
+                        <p style="margin: 4px 0;">👤 Tu Predicción:</p>
+                        <p style="margin: 4px 0; padding-left: 10px;">🥇 1º: <strong>${pred.p1 || 'N/A'}</strong> ${real.r1 && pred.p1 === real.r1 ? '✅' : ''}</p>
+                        <p style="margin: 4px 0; padding-left: 10px;">🥈 2º: <strong>${pred.p2 || 'N/A'}</strong> ${real.r2 && pred.p2 === real.r2 ? '✅' : ''}</p>
                         <hr style="border:0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
                         <p style="margin: 0; font-weight: bold; text-align: center; color: #444;">
-                            Puntos obtenidos: <span style="font-size:16px; color:var(--primary);">${pts} pts</span>
+                            Puntos: <span style="font-size:16px; color:var(--primary);">${pts} pts</span>
                         </p>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
-        
         irAPestaña('panel-ver-predicciones-publico');
     }
 
-    // ---- CÁLCULO DE LA REGLA DE PUNTOS ----
     function calcularPuntosGrupo(p1, p2, r1, r2) {
         if (!r1 && !r2) return 0; 
-        if (!p1 && !p2) return 0;
-
         if (p1 === r1 && p2 === r2) return 3;
         if (p1 === r2 && p2 === r1) return 2;
         if (p1 === r1 || p1 === r2 || p2 === r1 || p2 === r2) return 1;
-        
         return 0;
     }
 
@@ -657,17 +586,9 @@
             });
             return { id: p.id, nombre: p.nombre, puntos: total };
         });
-
         resultados.sort((a, b) => b.puntos - a.puntos);
-
         const tbody = document.getElementById('tabla-posiciones-body');
         tbody.innerHTML = '';
-        
-        if (resultados.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="color:#777;">No hay participantes inscritos aún.</td></tr>`;
-            return;
-        }
-
         resultados.forEach((r, idx) => {
             tbody.innerHTML += `
                 <tr>
@@ -675,8 +596,7 @@
                     <td style="text-align: left; padding-left: 20px;">${r.nombre}</td>
                     <td class="puntos-total">${r.puntos} pts</td>
                     <td><button class="btn-ver-publico" onclick="verPrediccionesPublicas(${r.id})">👁️ Ver</button></td>
-                </tr>
-            `;
+                </tr>`;
         });
     }
 

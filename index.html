@@ -399,7 +399,9 @@
     async function descargarDatosDeLaNube() {
         mostrarCargando(true);
         try {
-            let res = await fetch(ENDPOINT_NUBE + "?t=" + Date.now());
+            let res = await fetch(ENDPOINT_NUBE + "?t=" + Date.now(), {
+                cache: 'no-store'
+            });
             if (res.ok) {
                 let json = await res.json();
                 if (json && json.participantes) datosApp = json;
